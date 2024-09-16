@@ -1,6 +1,3 @@
-Oh, saya mengerti. Berikut adalah format proxy SOCKS menggunakan IP dan port yang Anda berikan:
-
-```
 socks5://202.74.244.139:5020
 socks5://50.172.75.114:80
 socks5://195.210.172.46:58350
