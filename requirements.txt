@@ -4,3 +4,4 @@ colorama
 fake-useragent
 telegram
 asyncio
+random
