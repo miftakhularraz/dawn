@@ -151,6 +151,7 @@ async def telegram_message(message):
         await bot.send_message(chat_id=chat_id, text=message)
     except Exception as e:
         print(f"{Fore.RED}[X] Error sending Telegram message: {e}{Style.BRIGHT}")
+
 async def main():
     banner()
     accounts = read_account()
@@ -228,9 +229,11 @@ Oops! There was an error in the "Keep Alive" process. We'll retry soon. 👌"""
     print(f"{Fore.MAGENTA}[@] All accounts processed.{Style.BRIGHT}")
     print(f"{Fore.GREEN}[+] Total points from all users: {total_points_all_users}{Style.BRIGHT}")
 
-    countdown(181)
-    print(f"\n{Fore.GREEN}[✓] Restarting the process...{Style.BRIGHT}\n")
+async def main_loop():
+    while True:
+        await main()
+        countdown(181)
+        print(f"\n{Fore.GREEN}[✓] Restarting the process...{Style.BRIGHT}\n")
 
 if __name__ == "__main__":
-    asyncio.run(main())
-
+    asyncio.run(main_loop())
