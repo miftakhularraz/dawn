@@ -7,6 +7,7 @@ from fake_useragent import UserAgent
 import os
 import asyncio
 import telegram
+import random
 
 CONFIG_FILE = "config.json"
 
@@ -40,6 +41,26 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 ua = UserAgent()
 
 init(autoreset=True)
+
+user_agents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Safari/605.1.15",
+    "Mozilla/5.0 (Linux; Android 10; Pixel 3 XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 9; SM-G960F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Mobile Safari/537.36",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
+]
+
+def get_random_user_agent():
+    return random.choice(user_agents)
+
+def check_proxy(proxy):
+    try:
+        response = requests.get("http://httpbin.org/ip", proxies={"http": proxy, "https": proxy}, timeout=5)
+        if response.status_code == 200:
+            return True
+    except requests.exceptions.RequestException:
+        return False
+    return False
 
 def banner():
     os.system("title DAWN Validator" if os.name == "nt" else "clear")
@@ -127,10 +148,10 @@ def keep_alive(headers, email, proxies=None):
         "_v": _v
     }
 
-    headers["User-Agent"] = ua.random
+    headers["User-Agent"] = get_random_user_agent()
 
     try:
-        response = requests.post(keepalive_url, headers=headers, json=keepalive_payload, verify=False, proxies=proxies)
+        response = requests.post(keepalive_url, headers=headers, json=keepalive_payload, verify=False, proxies=proxies, timeout=10)
         response.raise_for_status()
 
         json_response = response.json()
@@ -170,15 +191,16 @@ async def main():
         email = account["email"]
         token = account["token"]
 
-        # Assign proxy for the account
+        # Assign proxy untuk akun dan periksa proxy
         if account_index < len(proxies):
             proxy = proxies[account_index]
             proxy_dict = format_proxy(proxy)
-            if proxy_dict:
+            if proxy_dict and check_proxy(proxy_dict['http']):
                 proxy_message = f"Proxy used: {proxy}"
             else:
-                proxy_message = f"Invalid proxy format: {proxy}"
+                print(f"{Fore.RED}[X] Error: Proxy '{proxy}' is not valid or not working.{Style.BRIGHT}")
                 proxy_dict = None
+                proxy_message = "No proxy used"
         else:
             proxy_dict = None
             proxy_message = "No proxy used"
@@ -189,7 +211,7 @@ async def main():
             "Accept-Language": "en-US,en;q=0.9",
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
-            "User-Agent": ua.random
+            "User-Agent": get_random_user_agent()
         }
 
         print(f"{Fore.CYAN}━━━━━━━━━━━━━[ DAWN Validator | Account {account_index + 1} ]━━━━━━━━━━━━━{Style.BRIGHT}")
@@ -229,11 +251,8 @@ Oops! There was an error in the "Keep Alive" process. We'll retry soon. 👌"""
     print(f"{Fore.MAGENTA}[@] All accounts processed.{Style.BRIGHT}")
     print(f"{Fore.GREEN}[+] Total points from all users: {total_points_all_users}{Style.BRIGHT}")
 
-async def main_loop():
-    while True:
-        await main()
-        countdown(181)
-        print(f"\n{Fore.GREEN}[✓] Restarting the process...{Style.BRIGHT}\n")
+    countdown(181)
+    print(f"\n{Fore.GREEN}[✓] Restarting the process...{Style.BRIGHT}\n")
 
 if __name__ == "__main__":
-    asyncio.run(main_loop())
+    asyncio.run(main())
