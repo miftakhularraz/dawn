@@ -83,14 +83,24 @@ def read_proxies(filename="proxies.txt"):
 
 def format_proxy(proxy_str):
     try:
-        ip, port, username, password = proxy_str.split(':')
-        proxy = f"http://{username}:{password}@{ip}:{port}"
+        parts = proxy_str.split(':')
+        if len(parts) == 4:
+            # Format: ip:port:username:password
+            ip, port, username, password = parts
+            proxy = f"http://{username}:{password}@{ip}:{port}"
+        elif len(parts) == 2:
+            # Format: ip:port
+            ip, port = parts
+            proxy = f"http://{ip}:{port}"
+        else:
+            # Format tidak sesuai
+            raise ValueError("Invalid proxy format")
         return {
             "http": proxy,
             "https": proxy
         }
-    except ValueError:
-        print(f"{Fore.RED}[X] Error: Proxy format is incorrect for '{proxy_str}'.{Style.BRIGHT}")
+    except ValueError as e:
+        print(f"{Fore.RED}[X] Error: {e} for '{proxy_str}'.{Style.BRIGHT}")
         return None
 
 def total_points(headers):
